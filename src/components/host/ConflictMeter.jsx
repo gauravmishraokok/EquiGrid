@@ -1,83 +1,55 @@
-import { motion } from 'framer-motion'
-import { CONFLICT_LEVELS } from '../../config/constants.js'
-
-const ZONES = [
-  { key: 'STABLE',   label: 'STABLE',   color: '#22c55e', range: '0–25'   },
-  { key: 'STRESSED', label: 'STRESSED', color: '#eab308', range: '26–50'  },
-  { key: 'CRITICAL', label: 'CRITICAL', color: '#f97316', range: '51–75'  },
-  { key: 'CASCADE',  label: 'CASCADE',  color: '#ef4444', range: '76–100' },
-]
-
-export default function ConflictMeter({ conflictScore = 0, conflictLevel = 'STABLE' }) {
-  const pct = Math.min(100, Math.max(0, conflictScore)) / 100
-  const color = CONFLICT_LEVELS[conflictLevel]?.color || '#22c55e'
-
-  // Gauge height = 200px, 0 at bottom, 100 at top
-  const GAUGE_H = 200
-  const fillH = Math.round(pct * GAUGE_H)
+export default function ConflictMeter({ conflictScore, conflictLevel }) {
+  const colors = {
+    STABLE:   '#22C55E',
+    STRESSED: '#EAB308',
+    CRITICAL: '#F97316',
+    CASCADE:  '#DC2626',
+  }
+  const c = colors[conflictLevel] || '#22C55E'
+  const pct = Math.min(100, Math.max(0, conflictScore ?? 0))
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="text-xs text-slate-500 tracking-widest">CONFLICT INTENSITY</div>
-
-      <div className="flex gap-3 items-end">
-        {/* Gauge bar */}
-        <div className="relative" style={{ width: 32, height: GAUGE_H }}>
-          {/* Background */}
-          <div
-            className="absolute inset-0 rounded"
-            style={{
-              background: 'linear-gradient(to top, #22c55e33, #eab30833, #f9731633, #ef444433)',
-              border: '1px solid #1e293b',
-            }}
-          />
-          {/* Fill */}
-          <motion.div
-            className="absolute bottom-0 left-0 right-0 rounded"
-            style={{ backgroundColor: color, opacity: 0.85 }}
-            animate={{ height: fillH }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-          />
-          {/* Zone markers */}
-          {[25, 50, 75].map((mark) => (
-            <div
-              key={mark}
-              className="absolute w-full border-t border-slate-700"
-              style={{ bottom: `${mark}%` }}
-            />
-          ))}
-        </div>
-
-        {/* Zone labels */}
-        <div className="flex flex-col-reverse justify-between" style={{ height: GAUGE_H }}>
-          {ZONES.map((zone) => (
-            <div
-              key={zone.key}
-              className="flex items-center gap-1"
-              style={{ opacity: conflictLevel === zone.key ? 1 : 0.4 }}
-            >
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: zone.color }}
-              />
-              <span className="text-xs font-mono" style={{ color: zone.color }}>
-                {zone.label}
-              </span>
-            </div>
-          ))}
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '12px 0' }}>
+      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 500, color: '#94A3B8', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+        Conflict
+      </div>
+      {/* Level badge */}
+      <div style={{
+        fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 10,
+        color: c, background: `${c}15`, border: `1px solid ${c}40`,
+        borderRadius: 12, padding: '2px 8px', letterSpacing: '0.06em',
+      }}>
+        {conflictLevel || 'STABLE'}
+      </div>
+      {/* Thermometer track */}
+      <div style={{ position: 'relative', width: 36, height: 180, background: '#E2E8F7', borderRadius: 18, overflow: 'hidden' }}>
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          height: `${pct}%`,
+          background: `linear-gradient(to top, ${c}, ${c}99)`,
+          borderRadius: 18,
+          transition: 'height 1s ease, background 0.8s ease',
+        }} />
+        {/* Score overlay */}
+        <div style={{
+          position: 'absolute', top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)',
+          fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 11,
+          color: pct > 40 ? 'white' : '#475569',
+          writingMode: 'vertical-rl', textOrientation: 'mixed',
+        }}>
+          {Math.round(pct)}
         </div>
       </div>
-
-      {/* Score */}
-      <motion.div
-        className="text-3xl font-bold font-mono"
-        style={{ color }}
-        animate={{ opacity: [1, 0.7, 1] }}
-        transition={{ duration: 1.5, repeat: Infinity }}
-      >
-        {conflictScore}
-      </motion.div>
-      <div className="text-xs text-slate-500">/ 100</div>
+      {/* Level markers */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
+        {['CASCADE', 'CRITICAL', 'STRESSED', 'STABLE'].map(l => (
+          <div key={l} style={{
+            fontFamily: "'Inter', sans-serif", fontSize: 8, fontWeight: 500,
+            color: l === conflictLevel ? c : '#CBD5E1',
+          }}>{l}</div>
+        ))}
+      </div>
     </div>
   )
 }

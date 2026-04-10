@@ -1,144 +1,105 @@
 import { motion } from 'framer-motion'
 
 const FLAG_COLORS = {
-  suspicious: 'text-red-400 bg-red-950 border-red-900',
-  incomplete: 'text-yellow-400 bg-yellow-950 border-yellow-900',
-  contradictory: 'text-orange-400 bg-orange-950 border-orange-900',
-  vague: 'text-slate-400 bg-slate-800 border-slate-700',
-  reasonable: 'text-green-400 bg-green-950 border-green-900',
-  urgent: 'text-cyan-400 bg-cyan-950 border-cyan-900',
-  exaggerated: 'text-purple-400 bg-purple-950 border-purple-900',
-}
-
-const CATEGORY_ICONS = {
-  'life-critical': '🚨',
-  infrastructure: '⚙️',
-  operational: '📊',
-  comfort: '🛋️',
-  unknown: '❓',
-}
-
-function UrgencyBar({ score }) {
-  const pct = (score / 10) * 100
-  const color = score >= 8 ? '#ef4444' : score >= 6 ? '#f97316' : score >= 4 ? '#eab308' : '#22c55e'
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-        <motion.div
-          className="h-full rounded-full"
-          style={{ backgroundColor: color }}
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.5 }}
-        />
-      </div>
-      <span className="text-sm font-bold font-mono" style={{ color }}>{score}/10</span>
-    </div>
-  )
+  suspicious:    '#DC2626',
+  incomplete:    '#CA8A04',
+  contradictory: '#EA580C',
+  vague:         '#94A3B8',
+  reasonable:    '#16A34A',
+  urgent:        '#1A56DB',
+  exaggerated:   '#7C3AED',
 }
 
 export default function LLMReadback({ structured }) {
   if (!structured) return null
 
-  const {
-    urgencyScore = 1,
-    category = 'unknown',
-    riskIfDenied = 'Unknown',
-    confidence = 0,
-    flags = [],
-    keywordsDetected = [],
-    interpretedMeaning = '',
-    error,
-  } = structured
-
-  if (error) {
+  if (structured.error) {
     return (
-      <div className="bg-yellow-950 border border-yellow-800 rounded-lg p-4 text-sm text-yellow-300 font-mono">
-        ⚠ EquiGrid AI unavailable: {error}
+      <div style={{
+        background: '#FEFCE8', border: '1px solid #FDE047', borderRadius: 14, padding: '12px 16px',
+        fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#CA8A04',
+      }}>
+        EquiGrid AI unavailable: {structured.error}
       </div>
     )
   }
 
+  const {
+    urgencyScore = 1,
+    category = 'unknown',
+    riskIfDenied,
+    confidence = 0,
+    flags = [],
+    interpretedMeaning = '',
+  } = structured
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-slate-900 border border-cyan-900 rounded-lg p-4 flex flex-col gap-3"
+      transition={{ duration: 0.4 }}
+      style={{
+        background: 'white', border: '1px solid #E2E8F7', borderRadius: 14,
+        overflow: 'hidden', boxShadow: '0 4px 20px rgba(26,86,219,0.08)',
+      }}
     >
-      <div className="flex items-center gap-2">
-        <span className="text-cyan-400 text-sm font-bold font-mono tracking-wider">
-          ⚡ HOW EQUIGRID READ YOUR REQUEST
-        </span>
-      </div>
-
-      {/* Interpreted meaning */}
-      <div className="bg-slate-800 rounded p-2">
-        <div className="text-xs text-slate-500 mb-1">Interpreted as:</div>
-        <div className="text-sm text-white font-mono">"{interpretedMeaning}"</div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        {/* Urgency */}
-        <div>
-          <div className="text-xs text-slate-500 mb-1">Urgency Score</div>
-          <UrgencyBar score={urgencyScore} />
+      {/* Header strip */}
+      <div style={{ background: '#1A56DB', padding: '10px 16px' }}>
+        <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 12, color: 'white', letterSpacing: '0.06em' }}>
+          EQUIGRID POWER AUTHORITY
         </div>
-
-        {/* Category */}
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 1 }}>
+          How EquiGrid Read Your Request
+        </div>
+      </div>
+      {/* Content */}
+      <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div>
-          <div className="text-xs text-slate-500 mb-1">Category</div>
-          <div className="text-sm font-mono text-slate-300">
-            {CATEGORY_ICONS[category]} {category}
+          <div style={{ fontSize: 9, fontWeight: 600, color: '#94A3B8', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>Interpreted As</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: '#0F172A', fontStyle: 'italic' }}>
+            "{interpretedMeaning}"
           </div>
         </div>
-
-        {/* Risk if denied */}
-        <div>
-          <div className="text-xs text-slate-500 mb-1">Risk if Denied</div>
-          <div className="text-sm text-red-300 font-mono">{riskIfDenied}</div>
-        </div>
-
-        {/* Confidence */}
-        <div>
-          <div className="text-xs text-slate-500 mb-1">AI Confidence</div>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full bg-cyan-500"
-                style={{ width: `${confidence * 100}%` }}
-              />
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: 9, color: '#94A3B8', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.1em' }}>URGENCY</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 600, color: urgencyScore >= 8 ? '#DC2626' : urgencyScore >= 5 ? '#CA8A04' : '#16A34A' }}>
+              {urgencyScore}<span style={{ fontSize: 12, color: '#94A3B8' }}>/10</span>
             </div>
-            <span className="text-xs font-mono text-cyan-400">{Math.round(confidence * 100)}%</span>
+          </div>
+          <div>
+            <div style={{ fontSize: 9, color: '#94A3B8', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.1em' }}>CATEGORY</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 600, color: '#1A56DB', background: '#EFF6FF', padding: '4px 10px', borderRadius: 20, border: '1px solid #BFDBFE' }}>
+              {category}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: 9, color: '#94A3B8', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.1em' }}>CONFIDENCE</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 16, fontWeight: 600, color: '#475569' }}>
+              {Math.round((confidence ?? 0) * 100)}%
+            </div>
           </div>
         </div>
+        {riskIfDenied && (
+          <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 8, padding: '8px 10px' }}>
+            <span style={{ fontSize: 9, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Risk if denied: </span>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#EA580C' }}>{riskIfDenied}</span>
+          </div>
+        )}
+        {flags?.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {flags.map(flag => (
+              <span key={flag} style={{
+                fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 600,
+                color: FLAG_COLORS[flag] || '#475569',
+                background: `${FLAG_COLORS[flag] || '#475569'}15`,
+                border: `1px solid ${FLAG_COLORS[flag] || '#475569'}30`,
+                borderRadius: 12, padding: '2px 8px',
+              }}>{flag}</span>
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Flags */}
-      {flags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          <span className="text-xs text-slate-500 self-center">Flags:</span>
-          {flags.map((flag) => (
-            <span
-              key={flag}
-              className={`text-xs px-2 py-0.5 rounded border font-mono ${FLAG_COLORS[flag] || 'text-slate-400 bg-slate-800 border-slate-700'}`}
-            >
-              {flag}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Keywords */}
-      {keywordsDetected.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          <span className="text-xs text-slate-500 self-center">Keywords:</span>
-          {keywordsDetected.map((kw) => (
-            <span key={kw} className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono border border-slate-700">
-              {kw}
-            </span>
-          ))}
-        </div>
-      )}
     </motion.div>
   )
 }
