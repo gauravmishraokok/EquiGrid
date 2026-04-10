@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BUILDINGS } from '../config/buildings.js'
 import { listenBuildings, assignParticipant } from '../lib/db.js'
 
-const TIER_COLORS = ['', '#ef4444', '#f97316', '#3b82f6', '#8b5cf6']
-const TIER_LABELS = ['', 'CRITICAL', 'ESSENTIAL', 'STANDARD', 'LOW']
+const TIER_ACCENT = ['', '#DC2626', '#EA580C', '#1A56DB', '#7C3AED']
+const TIER_LABELS  = ['', 'CRITICAL', 'ESSENTIAL', 'STANDARD', 'LOW']
+const TIER_BG      = ['', '#FEF2F2', '#FFF7ED', '#EFF6FF', '#F5F3FF']
+const TIER_BORDER  = ['', '#FCA5A5', '#FDBA74', '#BFDBFE', '#DDD6FE']
 
 const ENV_OK = !!(
   import.meta.env.VITE_FIREBASE_API_KEY &&
@@ -15,8 +17,8 @@ const ENV_OK = !!(
 export default function JoinPage() {
   const navigate = useNavigate()
   const [dbBuildings, setDbBuildings] = useState({})
-  const [joining, setJoining] = useState(null)
-  const [error, setError] = useState(null)
+  const [joining, setJoining]         = useState(null)
+  const [error, setError]             = useState(null)
 
   useEffect(() => {
     if (!ENV_OK) return
@@ -26,7 +28,7 @@ export default function JoinPage() {
 
   const handleJoin = async (buildingId) => {
     const b = dbBuildings[buildingId]
-    if (b?.participantId) return // occupied
+    if (b?.participantId) return
 
     setJoining(buildingId)
     setError(null)
@@ -43,43 +45,52 @@ export default function JoinPage() {
 
   if (!ENV_OK) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="text-4xl mb-4">⚡</div>
-          <h1 className="text-xl font-bold text-cyan-400 font-mono mb-2">EquiGrid</h1>
-          <p className="text-slate-400 font-mono text-sm">Firebase not configured. Contact the host.</p>
+      <div style={{ minHeight: '100vh', background: '#F0F4FF', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>⚡</div>
+          <h1 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 22, color: '#1A56DB', marginBottom: 8 }}>EquiGrid</h1>
+          <p style={{ fontFamily: "'Inter', sans-serif", color: '#475569', fontSize: 14 }}>Firebase not configured. Contact the host.</p>
         </div>
       </div>
     )
   }
 
+  const connectedCount = Object.values(dbBuildings).filter(b => b.participantId).length
   const tierGroups = [1, 2, 3, 4].map((tier) => ({
     tier,
     buildings: Object.values(BUILDINGS).filter((b) => b.tier === tier),
   }))
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col">
+    <div style={{ minHeight: '100vh', background: '#F0F4FF', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+      <div style={{
+        background: 'white', borderBottom: '1px solid #E2E8F7',
+        padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.06)', position: 'sticky', top: 0, zIndex: 40,
+      }}>
         <div>
-          <div className="text-xl font-bold text-cyan-400 font-mono tracking-widest">⚡ EQUIGRID</div>
-          <div className="text-xs text-slate-500 font-mono">Select your building to join the grid</div>
+          <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 20, color: '#1A56DB', letterSpacing: '0.15em' }}>
+            ⚡ EQUIGRID
+          </div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#94A3B8', marginTop: 2 }}>
+            Select your building to join the grid
+          </div>
         </div>
-        <div className="text-xs text-slate-600 font-mono">
-          {Object.values(dbBuildings).filter(b => b.participantId).length} / {Object.keys(BUILDINGS).length} nodes connected
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: '#475569', background: '#F7F9FF', border: '1px solid #E2E8F7', borderRadius: 20, padding: '4px 12px' }}>
+          {connectedCount} / {Object.keys(BUILDINGS).length} connected
         </div>
       </div>
 
-      {/* Building grid */}
-      <div className="flex-1 p-6 max-w-2xl mx-auto w-full">
+      {/* Content */}
+      <div style={{ flex: 1, padding: 24, maxWidth: 640, margin: '0 auto', width: '100%' }}>
         <AnimatePresence>
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="mb-4 p-3 bg-red-950 border border-red-800 rounded text-red-300 text-sm font-mono"
+              style={{ marginBottom: 16, padding: '12px 16px', background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 10, fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#DC2626' }}
             >
               {error}
             </motion.div>
@@ -87,24 +98,23 @@ export default function JoinPage() {
         </AnimatePresence>
 
         {tierGroups.map(({ tier, buildings }) => (
-          <div key={tier} className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <div
-                className="text-xs font-bold font-mono px-2 py-0.5 rounded"
-                style={{
-                  color: TIER_COLORS[tier],
-                  backgroundColor: `${TIER_COLORS[tier]}22`,
-                  border: `1px solid ${TIER_COLORS[tier]}44`,
-                }}
-              >
+          <div key={tier} style={{ marginBottom: 28 }}>
+            {/* Tier header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <div style={{
+                fontFamily: "'Sora', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
+                color: TIER_ACCENT[tier], background: TIER_BG[tier], border: `1px solid ${TIER_BORDER[tier]}`,
+                borderRadius: 20, padding: '3px 12px',
+              }}>
                 TIER {tier} — {TIER_LABELS[tier]}
               </div>
-              <div className="flex-1 border-t border-slate-800" />
+              <div style={{ flex: 1, height: 1, background: '#E2E8F7' }} />
             </div>
 
-            <div className="flex flex-col gap-2">
+            {/* Building cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {buildings.map((building) => {
-                const db = dbBuildings[building.id] || {}
+                const db       = dbBuildings[building.id] || {}
                 const occupied = !!db.participantId
                 const isJoining = joining === building.id
 
@@ -113,49 +123,77 @@ export default function JoinPage() {
                     key={building.id}
                     onClick={() => !occupied && !joining && handleJoin(building.id)}
                     disabled={occupied || !!joining}
-                    whileTap={!occupied ? { scale: 0.98 } : {}}
-                    className={`w-full flex items-center gap-4 p-3 rounded-lg border text-left transition-all ${
-                      occupied
-                        ? 'bg-slate-900 border-slate-800 opacity-50 cursor-not-allowed'
-                        : isJoining
-                        ? 'bg-slate-800 border-cyan-800 cursor-wait'
-                        : 'bg-slate-900 border-slate-700 hover:border-cyan-700 hover:bg-slate-800 cursor-pointer'
-                    }`}
+                    whileTap={!occupied && !joining ? { scale: 0.98 } : {}}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 14,
+                      padding: '14px 16px', borderRadius: 12, border: 'none',
+                      textAlign: 'left', cursor: occupied ? 'not-allowed' : joining ? 'wait' : 'pointer',
+                      background: occupied ? '#F8FAFF' : isJoining ? '#EFF6FF' : 'white',
+                      boxShadow: occupied ? 'none' : '0 1px 4px rgba(26,86,219,0.06)',
+                      outline: isJoining ? `2px solid ${TIER_ACCENT[building.tier]}` : occupied ? '1px solid #E2E8F7' : '1px solid #E2E8F7',
+                      opacity: occupied ? 0.55 : 1,
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={e => {
+                      if (!occupied && !joining) {
+                        e.currentTarget.style.boxShadow = `0 4px 16px rgba(26,86,219,0.12)`
+                        e.currentTarget.style.outline = `1.5px solid ${TIER_ACCENT[building.tier]}`
+                        e.currentTarget.style.transform = 'translateY(-1px)'
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.boxShadow = occupied ? 'none' : '0 1px 4px rgba(26,86,219,0.06)'
+                      e.currentTarget.style.outline = '1px solid #E2E8F7'
+                      e.currentTarget.style.transform = 'translateY(0)'
+                    }}
                   >
                     {/* Emoji */}
-                    <span className="text-2xl w-8 text-center flex-shrink-0">{building.emoji}</span>
+                    <span style={{ fontSize: 28, flexShrink: 0, width: 36, textAlign: 'center' }}>{building.emoji}</span>
 
                     {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-200 font-mono text-sm">{building.name}</span>
-                        <span className="text-xs text-slate-500 font-mono">{building.id}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                        <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 15, color: '#0F172A' }}>{building.name}</span>
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#94A3B8' }}>{building.id}</span>
                       </div>
-                      <div className="flex items-center gap-3 mt-0.5">
-                        <span className="text-xs text-slate-500 font-mono">{building.type}</span>
-                        <span className="text-xs text-slate-600 font-mono">Base: {building.base} kW • Max: {building.max} kW</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#475569' }}>{building.type}</span>
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#94A3B8' }}>
+                          Base: {building.base} kW • Max: {building.max} kW
+                        </span>
                       </div>
                     </div>
 
-                    {/* Status */}
-                    <div className="flex-shrink-0">
+                    {/* Status badge */}
+                    <div style={{ flexShrink: 0 }}>
                       {occupied ? (
-                        <span className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-500 border border-slate-700 font-mono">
-                          OCCUPIED
+                        <span style={{
+                          fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600,
+                          color: '#94A3B8', background: '#F1F5F9', border: '1px solid #E2E8F7',
+                          borderRadius: 20, padding: '4px 12px',
+                        }}>
+                          Occupied
                         </span>
                       ) : isJoining ? (
-                        <span className="text-xs px-2 py-1 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-mono animate-pulse">
-                          JOINING...
-                        </span>
-                      ) : (
-                        <span
-                          className="text-xs px-2 py-1 rounded font-mono font-bold"
+                        <motion.span
+                          animate={{ opacity: [1, 0.5, 1] }}
+                          transition={{ duration: 0.8, repeat: Infinity }}
                           style={{
-                            color: TIER_COLORS[building.tier],
-                            backgroundColor: `${TIER_COLORS[building.tier]}22`,
-                            border: `1px solid ${TIER_COLORS[building.tier]}44`,
+                            fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600,
+                            color: TIER_ACCENT[building.tier], background: TIER_BG[building.tier],
+                            border: `1px solid ${TIER_BORDER[building.tier]}`,
+                            borderRadius: 20, padding: '4px 12px',
                           }}
                         >
+                          Joining...
+                        </motion.span>
+                      ) : (
+                        <span style={{
+                          fontFamily: "'Sora', sans-serif", fontSize: 11, fontWeight: 700,
+                          color: TIER_ACCENT[building.tier], background: TIER_BG[building.tier],
+                          border: `1.5px solid ${TIER_BORDER[building.tier]}`,
+                          borderRadius: 20, padding: '4px 14px', letterSpacing: '0.04em',
+                        }}>
                           JOIN →
                         </span>
                       )}
@@ -169,8 +207,10 @@ export default function JoinPage() {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-slate-800 px-6 py-3 text-center text-xs text-slate-600 font-mono">
-        EquiGrid — Real-Time Power Grid Conflict Resolution
+      <div style={{ borderTop: '1px solid #E2E8F7', padding: '12px 24px', textAlign: 'center', background: 'white' }}>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#CBD5E1' }}>
+          EquiGrid — Real-Time Power Grid Conflict Resolution
+        </span>
       </div>
     </div>
   )
